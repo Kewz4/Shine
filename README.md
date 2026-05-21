@@ -8,11 +8,11 @@ ___
 
 
 # What does it do?
-Currently, this mod adds these features, **without shaders**:
+Shine adds these features, **without shaders**:
 - Selective Bloom
-- Colored lights
-- Rim light (Outline around blocks)
-- Custom disabled shading (Cartoonish look)
+- Colored lighting
+- Rim lighting (outline around blocks)
+- Optional disabled shading (cartoonish look)
 
 Little to **no performance loss** when enabled, with support for [Sodium](https://modrinth.com/mod/sodium).
 
