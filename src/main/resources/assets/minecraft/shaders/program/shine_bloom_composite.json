@@ -1,0 +1,25 @@
+{
+  "blend": { "func": "add", "srcrgb": "one", "dstrgb": "zero" },
+  "vertex": "shine_blit",
+  "fragment": "shine_bloom_composite",
+  "attributes": ["Position"],
+  "samplers": [
+    { "name": "DiffuseSampler" },
+    { "name": "BloomLevel0" },
+    { "name": "BloomLevel1" },
+    { "name": "BloomLevel2" },
+    { "name": "BloomLevel3" },
+    { "name": "BloomLevel4" },
+    { "name": "BloomLevel5" }
+  ],
+  "uniforms": [
+    { "name": "OutSize",  "type": "float", "count": 2, "values": [1.0, 1.0] },
+    { "name": "Strength", "type": "float", "count": 1, "values": [3.0] },
+    { "name": "Weight0",  "type": "float", "count": 1, "values": [1.0] },
+    { "name": "Weight1",  "type": "float", "count": 1, "values": [0.0] },
+    { "name": "Weight2",  "type": "float", "count": 1, "values": [0.0] },
+    { "name": "Weight3",  "type": "float", "count": 1, "values": [0.0] },
+    { "name": "Weight4",  "type": "float", "count": 1, "values": [0.0] },
+    { "name": "Weight5",  "type": "float", "count": 1, "values": [0.0] }
+  ]
+}

@@ -1,60 +1,52 @@
 package com.bloom.client.selection;
 
 import com.bloom.client.config.BloomConfig;
-import java.util.Set;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 
+import java.util.Map;
+import java.util.Set;
+
 public final class BloomSelection {
-	private static final Set<Identifier> SELECTED_FLUID_IDS = Set.of(
-		Identifier.parse("minecraft:lava"),
-		Identifier.parse("minecraft:flowing_lava")
-	);
+    private static final Set<String> SELECTED_FLUID_IDS = Set.of(
+        "minecraft:lava",
+        "minecraft:flowing_lava"
+    );
 
-	private BloomSelection() {
-	}
+    private BloomSelection() {}
 
-	public static double getBlockSourceStrength(BlockState blockState) {
-		BloomConfig.Data config = BloomConfig.get();
-		Identifier blockId = BuiltInRegistries.BLOCK.getKey(blockState.getBlock());
-		Double override = config.blockStrengthOverrides.get(blockId.toString());
-		if (override != null) {
-			return clampSourceStrength(override);
-		}
+    public static double getBlockSourceStrength(BlockState state) {
+        BloomConfig.Data cfg = BloomConfig.get();
+        ResourceLocation key = BuiltInRegistries.BLOCK.getKey(state.getBlock());
+        Map<String, Double> overrides = cfg.effectiveOverrides();
+        Double ov = overrides.get(key.toString());
+        if (ov != null) return clamp(ov);
+        double fallback = state.getLightEmission() > 0 ? cfg.defaultLightSourceStrength : cfg.defaultNonLightStrength;
+        return clamp(fallback);
+    }
 
-		double fallback = blockState.getLightEmission() > 0 ? config.defaultLightSourceStrength : config.defaultNonLightStrength;
-		return clampSourceStrength(fallback);
-	}
+    public static double getFluidSourceStrength(FluidState state) {
+        if (state.isEmpty()) return 0.0;
+        BloomConfig.Data cfg = BloomConfig.get();
+        Map<String, Double> overrides = cfg.effectiveOverrides();
+        ResourceLocation fluidKey = BuiltInRegistries.FLUID.getKey(state.getType());
+        Double ov = overrides.get(fluidKey.toString());
+        if (ov != null) return clamp(ov);
+        Block legacyBlock = state.createLegacyBlock().getBlock();
+        ResourceLocation blockKey = BuiltInRegistries.BLOCK.getKey(legacyBlock);
+        if (blockKey != null) {
+            Double bOv = overrides.get(blockKey.toString());
+            if (bOv != null) return clamp(bOv);
+        }
+        double fallback = SELECTED_FLUID_IDS.contains(fluidKey.toString())
+            ? cfg.defaultLightSourceStrength : cfg.defaultNonLightStrength;
+        return clamp(fallback);
+    }
 
-	public static double getFluidSourceStrength(FluidState fluidState) {
-		if (fluidState.isEmpty()) {
-			return 0.0;
-		}
-
-		BloomConfig.Data config = BloomConfig.get();
-		Identifier fluidId = BuiltInRegistries.FLUID.getKey(fluidState.getType());
-		Double override = config.blockStrengthOverrides.get(fluidId.toString());
-		if (override != null) {
-			return clampSourceStrength(override);
-		}
-
-		Block legacyFluidBlock = fluidState.createLegacyBlock().getBlock();
-		Identifier legacyBlockId = BuiltInRegistries.BLOCK.getKey(legacyFluidBlock);
-		if (legacyBlockId != null) {
-			Double legacyOverride = config.blockStrengthOverrides.get(legacyBlockId.toString());
-			if (legacyOverride != null) {
-				return clampSourceStrength(legacyOverride);
-			}
-		}
-
-		double fallback = SELECTED_FLUID_IDS.contains(fluidId) ? config.defaultLightSourceStrength : config.defaultNonLightStrength;
-		return clampSourceStrength(fallback);
-	}
-
-	private static double clampSourceStrength(double value) {
-		return Math.max(BloomConfig.MIN_SOURCE_STRENGTH, Math.min(BloomConfig.MAX_SOURCE_STRENGTH, value));
-	}
+    private static double clamp(double v) {
+        return Math.max(BloomConfig.MIN_SOURCE_STRENGTH, Math.min(BloomConfig.MAX_SOURCE_STRENGTH, v));
+    }
 }

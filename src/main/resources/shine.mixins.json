@@ -1,22 +1,21 @@
 {
 	"required": true,
 	"minVersion": "0.8",
+	"package": "com.bloom.mixin",
+	"compatibilityLevel": "JAVA_17",
 	"plugin": "com.bloom.mixin.BloomMixinPlugin",
-	"package": "com.bloom.mixin.client",
-	"compatibilityLevel": "JAVA_21",
 	"client": [
-		"ChunkSectionsToRenderMixin",
-		"SectionCompilerMixin",
-		"ModelBlockRendererMixin",
-		"LiquidBlockRendererMixin",
-		"IndigoAbstractTerrainRenderContextMixin",
-		"sodium.SodiumBlockRendererMixin",
-		"sodium.SodiumChunkMeshBufferBuilderMixin",
-		"sodium.SodiumDefaultFluidRendererMixin",
-		"sodium.SodiumShaderLoaderMixin",
-		"sodium.SodiumShaderChunkRendererMixin",
-		"accessor.PostChainAccessor",
-		"accessor.PostPassAccessor"
+		"client.MainTargetMixin",
+		"client.LevelRendererMixin",
+		"client.ModelBlockRendererMixin",
+		"client.LiquidBlockRendererMixin",
+		"client.BlockRenderDispatcherMixin",
+		"client.GuiGraphicsMixin",
+		"client.embeddium.EmbeddiumBlockRendererMixin",
+		"client.embeddium.EmbeddiumDefaultFluidRendererMixin",
+		"client.embeddium.EmbeddiumChunkMeshBufferBuilderMixin",
+		"client.embeddium.EmbeddiumShaderChunkRendererMixin",
+		"client.embeddium.EmbeddiumShaderLoaderMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

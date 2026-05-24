@@ -1,0 +1,15 @@
+{
+  "blend": { "func": "add", "srcrgb": "one", "dstrgb": "zero" },
+  "vertex": "shine_blit",
+  "fragment": "shine_bloom_upsample",
+  "attributes": ["Position"],
+  "samplers": [
+    { "name": "DiffuseSampler" },
+    { "name": "LargerSampler" }
+  ],
+  "uniforms": [
+    { "name": "OutSize",      "type": "float", "count": 2, "values": [1.0, 1.0] },
+    { "name": "SmallWeight",  "type": "float", "count": 1, "values": [0.8] },
+    { "name": "LargeWeight",  "type": "float", "count": 1, "values": [0.2] }
+  ]
+}

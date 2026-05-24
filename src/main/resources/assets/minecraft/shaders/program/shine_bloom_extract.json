@@ -1,0 +1,21 @@
+{
+  "blend": { "func": "add", "srcrgb": "one", "dstrgb": "zero" },
+  "vertex": "shine_blit",
+  "fragment": "shine_bloom_extract",
+  "attributes": ["Position"],
+  "samplers": [
+    { "name": "DiffuseSampler" },
+    { "name": "DepthSampler" }
+  ],
+  "uniforms": [
+    { "name": "OutSize",            "type": "float", "count": 2, "values": [1.0, 1.0] },
+    { "name": "Threshold",          "type": "float", "count": 1, "values": [0.15] },
+    { "name": "HighlightClamp",     "type": "float", "count": 1, "values": [0.3] },
+    { "name": "SoftKnee",           "type": "float", "count": 1, "values": [0.2] },
+    { "name": "MaxDistance",        "type": "float", "count": 1, "values": [75.0] },
+    { "name": "NearPlane",          "type": "float", "count": 1, "values": [0.05] },
+    { "name": "FarPlane",           "type": "float", "count": 1, "values": [1000.0] },
+    { "name": "SourceStrengthScale","type": "float", "count": 1, "values": [5.0] },
+    { "name": "DistanceFadeRange",  "type": "float", "count": 1, "values": [2.0] }
+  ]
+}

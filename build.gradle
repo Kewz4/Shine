@@ -1,106 +1,124 @@
 plugins {
-	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
-	id 'maven-publish'
+    id 'net.minecraftforge.gradle' version '[6.0,6.2)'
+    id 'org.spongepowered.mixin' version '0.7.+'
+    id 'maven-publish'
 }
 
 version = project.mod_version
 group = project.maven_group
 
 base {
-	archivesName = project.archives_base_name
-}
-
-repositories {
-	maven {
-		name = "TerraformersMC"
-		url = "https://maven.terraformersmc.com/releases/"
-	}
-	maven {
-		name = "isXander"
-		url = "https://maven.isxander.dev/releases"
-	}
-	maven {
-		name = "Modrinth"
-		url = "https://api.modrinth.com/maven"
-		content {
-			includeGroup "maven.modrinth"
-		}
-	}
-}
-
-loom {
-	mods {
-		"shine" {
-			sourceSet sourceSets.main
-		}
-	}
-
-}
-
-dependencies {
-	// To change the versions see the gradle.properties file
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings loom.officialMojangMappings()
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-
-	// Fabric API. This is technically optional, but you probably want it anyway.
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-
-	// YACL (config screen UI)
-	modImplementation "dev.isxander:yet-another-config-lib:${project.yacl_version}"
-
-	// Mod Menu integration is optional for end users but enabled in dev runtime.
-	modCompileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
-	modLocalRuntime "com.terraformersmc:modmenu:${project.modmenu_version}"
-
-	// Sodium compile stubs for optional compatibility mixins.
-	modCompileOnly "maven.modrinth:sodium:mc1.21.11-0.8.6-fabric"
-}
-
-processResources {
-	inputs.property "version", project.version
-
-	filesMatching("fabric.mod.json") {
-		expand "version": inputs.properties.version
-	}
-}
-
-tasks.withType(JavaCompile).configureEach {
-	it.options.release = 21
+    archivesName = project.archives_base_name
 }
 
 java {
-	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-	// if it is present.
-	// If you remove this line, sources will not be generated.
-	withSourcesJar()
+    toolchain.languageVersion = JavaLanguageVersion.of(17)
+    withSourcesJar()
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
 
-	sourceCompatibility = JavaVersion.VERSION_21
-	targetCompatibility = JavaVersion.VERSION_21
+minecraft {
+    mappings channel: 'official', version: project.minecraft_version
+    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+
+    runs {
+        client {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+            arg "-mixin.config=shine.mixins.json"
+            mods {
+                shine {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        server {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            mods {
+                shine {
+                    source sourceSets.main
+                }
+            }
+        }
+    }
+}
+
+mixin {
+    add sourceSets.main, 'shine.refmap.json'
+    config 'shine.mixins.json'
+}
+
+repositories {
+    maven { url = 'https://maven.minecraftforge.net' }
+    maven {
+        name = 'Modrinth'
+        url = 'https://api.modrinth.com/maven'
+        content {
+            includeGroup 'maven.modrinth'
+        }
+    }
+    maven {
+        name = 'Oculus / Iris (Forge)'
+        url = 'https://github.com/IrisShaders/Iris-Forge-Maven/raw/main'
+        content {
+            includeGroup 'net.irisshaders'
+        }
+    }
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${project.minecraft_version}-${project.forge_version}"
+
+    // Embeddium (Forge port of Sodium) — compile stubs only
+    compileOnly fg.deobf('maven.modrinth:embeddium:0.3.9+mc1.20.1')
+
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+}
+
+processResources {
+    inputs.property 'version', project.version
+
+    filesMatching('META-INF/mods.toml') {
+        expand 'version': project.version
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.encoding = 'UTF-8'
+    it.options.release = 17
 }
 
 jar {
-	inputs.property "archivesName", project.base.archivesName
+    manifest {
+        attributes([
+            'Specification-Title'     : 'shine',
+            'Specification-Vendor'    : 'tapeQ',
+            'Specification-Version'   : '1',
+            'Implementation-Title'    : project.name,
+            'Implementation-Version'  : project.version,
+            'Implementation-Vendor'   : 'tapeQ',
+            'MixinConfigs'            : 'shine.mixins.json'
+        ])
+    }
 
-	from("LICENSE.md") {
-		rename { "${it}_${inputs.properties.archivesName}"}
-	}
+    from("LICENSE.md") {
+        rename { "${it}_${project.archives_base_name}" }
+    }
 }
 
-// configure the maven publication
 publishing {
-	publications {
-		create("mavenJava", MavenPublication) {
-			artifactId = project.archives_base_name
-			from components.java
-		}
-	}
-
-	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
-	repositories {
-		// Add repositories to publish to here.
-		// Notice: This block does NOT have the same function as the block in the top level.
-		// The repositories here will be used for publishing your artifact, not for
-		// retrieving dependencies.
-	}
+    publications {
+        create('mavenJava', MavenPublication) {
+            artifactId = project.archives_base_name
+            from components.java
+        }
+    }
+    repositories {}
 }

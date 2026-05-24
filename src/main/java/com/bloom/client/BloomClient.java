@@ -3,37 +3,51 @@ package com.bloom.client;
 import com.bloom.BloomMod;
 import com.bloom.client.config.BloomConfig;
 import com.bloom.client.render.BloomPostProcessor;
-import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.client.KeyMapping;
-import com.mojang.blaze3d.platform.InputConstants;
-import net.minecraft.resources.Identifier;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
+import net.minecraftforge.client.event.RenderLevelStageEvent;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
-public class BloomClient implements ClientModInitializer {
-	private static final KeyMapping TOGGLE_BLOOM_KEY = KeyBindingHelper.registerKeyBinding(
-		new KeyMapping(
-			"key.shine.toggle",
-			InputConstants.Type.KEYSYM,
-			GLFW.GLFW_KEY_B,
-			KeyMapping.Category.register(Identifier.fromNamespaceAndPath(BloomMod.MOD_ID, "main"))
-		)
-	);
+@Mod.EventBusSubscriber(modid = BloomMod.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
+public class BloomClient {
 
-	@Override
-	public void onInitializeClient() {
-		BloomConfig.load();
+    public static final KeyMapping TOGGLE_BLOOM_KEY = new KeyMapping(
+        "key.shine.toggle",
+        InputConstants.Type.KEYSYM,
+        GLFW.GLFW_KEY_B,
+        "key.categories.shine.main"
+    );
 
-		ClientTickEvents.END_CLIENT_TICK.register(client -> {
-			while (TOGGLE_BLOOM_KEY.consumeClick()) {
-				boolean enabled = BloomPostProcessor.toggleFromKeybind();
-				BloomMod.LOGGER.info("Shine post-processing {}", enabled ? "enabled" : "disabled");
-			}
-		});
+    public static void init() {
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(BloomClient::registerKeys);
+    }
 
-		WorldRenderEvents.START_MAIN.register(BloomPostProcessor::prepareSourceIfEnabled);
-		WorldRenderEvents.BEFORE_ENTITIES.register(BloomPostProcessor::renderIfEnabled);
-	}
+    private static void registerKeys(RegisterKeyMappingsEvent event) {
+        event.register(TOGGLE_BLOOM_KEY);
+    }
+
+    @SubscribeEvent
+    public static void onClientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) return;
+        while (TOGGLE_BLOOM_KEY.consumeClick()) {
+            boolean enabled = BloomPostProcessor.toggleFromKeybind();
+            BloomMod.LOGGER.info("Shine bloom {}", enabled ? "enabled" : "disabled");
+        }
+    }
+
+    @SubscribeEvent
+    public static void onRenderLevelStage(RenderLevelStageEvent event) {
+        if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_CUTOUT_BLOCKS) {
+            BloomPostProcessor.prepareSourceIfEnabled(event);
+        }
+        if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_LEVEL) {
+            BloomPostProcessor.renderIfEnabled(event);
+        }
+    }
 }
