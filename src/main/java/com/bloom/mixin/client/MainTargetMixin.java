@@ -61,12 +61,14 @@ public abstract class MainTargetMixin extends RenderTarget implements IMainTarge
     }
 
     // Called on resize (RenderTarget.resize → destroyBuffers → createBuffers)
-    @Inject(method = "createBuffers(IIZ)V", at = @At("TAIL"))
+    // remap=false + bare SRG name: Mixin searches the inheritance chain rather than
+    // doing a class-qualified lookup that fails because createBuffers is only in RenderTarget
+    @Inject(method = "m_83950_(IIZ)V", at = @At("TAIL"), remap = false)
     private void shine$attachBloomOnResize(int width, int height, boolean onThread, CallbackInfo ci) {
         shine$attachBloomTexture(width, height);
     }
 
-    @Inject(method = "destroyBuffers()V", at = @At("HEAD"))
+    @Inject(method = "m_83930_()V", at = @At("HEAD"), remap = false)
     private void shine$destroyBloomOnBufferDestroy(CallbackInfo ci) {
         shine$destroyBloomTexture();
     }
