@@ -3,6 +3,7 @@
 	"minVersion": "0.8",
 	"package": "com.bloom.mixin",
 	"compatibilityLevel": "JAVA_17",
+	"refmap": "shine.refmap.json",
 	"plugin": "com.bloom.mixin.BloomMixinPlugin",
 	"client": [
 		"client.MainTargetMixin",
