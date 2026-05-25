@@ -3,6 +3,7 @@ package com.bloom.client.render;
 import com.bloom.BloomMod;
 import com.bloom.client.compat.IrisCompat;
 import com.bloom.client.config.BloomConfig;
+import com.bloom.core.IMainTarget;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -43,11 +44,19 @@ public final class BloomPostProcessor {
         BloomTargetManager.invalidate();
     }
 
-    public static void prepareSourceIfEnabled(RenderLevelStageEvent event) {
+    // Called at AFTER_SKY, before any terrain draws to attachment 1.
+    public static void prepareNewFrame(RenderLevelStageEvent event) {
         captureEnabledThisFrame = false;
         BloomConfig.Data cfg = BloomConfig.get();
         if (!cfg.enabled || checkIris()) return;
-        if (Minecraft.getInstance().level == null) return;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) return;
+        // Clear the bloom source attachment so stale data from the previous frame
+        // does not bleed into areas not covered by terrain this frame.
+        RenderTarget main = mc.getMainRenderTarget();
+        if (main instanceof IMainTarget imt) {
+            imt.shine$clearBloomTexture();
+        }
         captureEnabledThisFrame = true;
     }
 
@@ -160,6 +169,12 @@ public final class BloomPostProcessor {
         u1(e, "FarPlane",            Minecraft.getInstance().gameRenderer.getDepthFar());
         u1(e, "SourceStrengthScale", 5.0f);
         u1(e, "DistanceFadeRange",   2.0f);
+        // The extract shader reads source.a as encoded bloom strength (written by terrain.fsh
+        // to GL_COLOR_ATTACHMENT1). sceneCopy is attachment 0 whose alpha is always ~1.0,
+        // which would make every pixel bloom. Override DiffuseSampler to the real source.
+        if (main instanceof IMainTarget imt) {
+            e.setSampler("DiffuseSampler", imt::shine$getColorBloomTextureId);
+        }
         e.setSampler("DepthSampler", main::getDepthTextureId);
         e.markDirty();
         extractPass.process(0.0f);

@@ -1,7 +1,10 @@
 package com.bloom;
 
 import com.bloom.client.config.BloomConfig;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
@@ -15,8 +18,14 @@ public class BloomMod {
     public BloomMod() {
         BloomConfig.load();
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () ->
+                FMLJavaModLoadingContext.get().getModEventBus().addListener(this::clientSetup));
     }
 
     private void setup(FMLCommonSetupEvent event) {
+    }
+
+    private void clientSetup(FMLClientSetupEvent event) {
+        com.bloom.client.BloomClient.init();
     }
 }

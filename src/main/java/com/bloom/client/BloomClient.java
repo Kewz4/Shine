@@ -2,13 +2,16 @@ package com.bloom.client;
 
 import com.bloom.BloomMod;
 import com.bloom.client.config.BloomConfig;
+import com.bloom.client.gui.BloomConfigScreen;
 import com.bloom.client.render.BloomPostProcessor;
 import net.minecraft.client.KeyMapping;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.ConfigScreenHandler;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.lwjgl.glfw.GLFW;
@@ -26,6 +29,10 @@ public class BloomClient {
 
     public static void init() {
         FMLJavaModLoadingContext.get().getModEventBus().addListener(BloomClient::registerKeys);
+        ModLoadingContext.get().registerExtensionPoint(
+                ConfigScreenHandler.ConfigScreenFactory.class,
+                () -> new ConfigScreenHandler.ConfigScreenFactory((mc, parent) -> new BloomConfigScreen(parent))
+        );
     }
 
     private static void registerKeys(RegisterKeyMappingsEvent event) {
@@ -43,8 +50,10 @@ public class BloomClient {
 
     @SubscribeEvent
     public static void onRenderLevelStage(RenderLevelStageEvent event) {
-        if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_CUTOUT_BLOCKS) {
-            BloomPostProcessor.prepareSourceIfEnabled(event);
+        // AFTER_SKY fires before solid/cutout terrain draws, so we can clear the bloom
+        // attachment and arm the capture flag before LevelRendererMixin enables MRT.
+        if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_SKY) {
+            BloomPostProcessor.prepareNewFrame(event);
         }
         if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_LEVEL) {
             BloomPostProcessor.renderIfEnabled(event);
