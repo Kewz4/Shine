@@ -55,9 +55,11 @@ public abstract class MainTargetMixin extends RenderTarget implements IMainTarge
     }
 
     // Called on initial creation (MainTarget uses its own createFrameBuffer path)
+    // Use the method parameters directly — avoids accessing this.width/this.height
+    // whose field names would need separate @Shadow declarations to be refmap-remapped.
     @Inject(method = "createFrameBuffer(II)V", at = @At("RETURN"))
     private void shine$attachBloomOnFirstCreate(int width, int height, CallbackInfo ci) {
-        shine$attachBloomTexture(this.width, this.height);
+        shine$attachBloomTexture(width, height);
     }
 
     @Override

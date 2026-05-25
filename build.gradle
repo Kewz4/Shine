@@ -95,6 +95,8 @@ tasks.withType(JavaCompile).configureEach {
     it.options.release = 17
 }
 
+jar.finalizedBy('reobfJar')
+
 jar {
     manifest {
         attributes([
